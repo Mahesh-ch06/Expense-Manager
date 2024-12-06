@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(45deg, #4caf50, #009688);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #00796b;
+      padding: 10px;
+    }
+
+    .menu-btn {
+      flex: 1;
+      color: white;
+      padding: 10px 0;
+      border: none;
+      background: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .menu-btn.active {
+      background: #004d40;
+      font-weight: bold;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .input-group input,
+    .input-group select,
+    .input-group button {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #388e3c;
+    }
+
+    button.delete-btn:hover {
+  background-color: #d9363e;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .summary-item {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #f1f1f1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    canvas {
+      max-width: 100%;
+      height: 300px;
+    }
+
+    .list-container {
+      margin-top: 20px;
+    }
+
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .list li {
+      background: #f8f8f8;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .paid-checkbox {
+      margin-left: 10px;
+    }
+
+    /* Additional Styling */
+    .section {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .section.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .menu-btn {
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .menu-btn:hover {
+      background: #004d40;
+      color: #fff;
+    }
+
+    input, select, button {
+      outline: none;
+    }
+    /* Due List Container */
+#due-list {
+  padding: 0;
+  list-style: none;
+}
+
+/* List Items */
+#due-list li {
+  margin-bottom: 10px;
+  font-size: 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+}
+
+/* Checkbox Styling */
+#due-list li input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+  #due-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  #due-list li span {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  #due-list li small {
+    font-size: 12px;
+  }
+
+  #due-list li button {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+/* Trash Icon Button */
+.delete-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #e63946;
+  color: white;
+  transform: scale(1.1);
+}
+
+
+
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Expense Manager</h1>
+    </header>
+    <nav>
+      <button class="menu-btn active" data-section="dashboard">Dashboard</button>
+      <button class="menu-btn" data-section="expense-tracker">Expenses</button>
+      <button class="menu-btn" data-section="received-amounts">Received</button>
+      <button class="menu-btn" data-section="due-amounts">Dues</button>
+    </nav>
+    <main>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="section active">
+        <div class="card">
+          <h2>Overview</h2>
+          <div class="summary">
+            <div class="summary-item">
+              <span>Total Spent</span>
+              <strong>₹<span id="dashboard-total-expenses">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Total Received</span>
+              <strong>₹<span id="dashboard-total-received">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Due Amounts</span>
+              <strong>₹<span id="dashboard-total-due">0</span></strong>
+            </div>
+          </div>
+          <canvas id="dashboard-chart"></canvas>
+        </div>
+      </section>
+
+      <!-- Expense Tracker Section -->
+      <section id="expense-tracker" class="section">
+        <div class="card">
+          <h2>Add Expense</h2>
+          <div class="input-group">
+            <input type="text" id="expense-name" placeholder="Expense Name">
+            <input type="number" id="expense-amount" placeholder="Amount (₹)">
+            <select id="expense-category">
+              <option value="Online Shopping">Online Shopping</option>
+              <option value="Paid to Someone">Paid to Someone</option>
+              <option value="Other">Other</option>
+            </select>
+            <input type="date" id="expense-date" />
+            <button id="add-expense-btn">Add Expense</button>
+          </div>
+          <div class="list-container">
+            <h3>Your Expenses</h3>
+            <ul id="expense-list" class="list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Received Amounts Section -->
+      <section id="received-amounts" class="section">
+        <div class="card">
+          <h2>Received Amounts</h2>
+          <div class="input-group">
+            <input type="text" id="received-from" placeholder="Received From">
+            <input type="number" id="received-amount" placeholder="Amount (₹)">
+            <input type="date" id="received-date" />
+            <button id="add-received-btn">Add</button>
+          </div>
+          <div class="list-container">
+            <h3>All Received Amounts</h3>
+            <ul id="received-list" class="list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Due Amounts Section -->
+      <section id="due-amounts" class="section">
+        <div class="card">
+          <h2>Due Tracker</h2>
+          <div class="input-group">
+            <input type="text" id="due-person" placeholder="Person Name">
+            <input type="number" id="due-amount" placeholder="Amount (₹)">
+            <input type="date" id="due-date" />
+            <button id="add-due-btn">Add</button>
+          </div>
+          <div class="list-container">
+            <h3>Pending Dues</h3>
+            <ul id="due-list" class="list"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const menuButtons = document.querySelectorAll(".menu-btn");
+    const sections = document.querySelectorAll(".section");
+
+    let chart; // Holds the chart instance
+
+    // Load saved data from localStorage or initialize if not present
+    let savedData = JSON.parse(localStorage.getItem("monthlyData")) || {
+      expenses: [],
+      received: [],
+      dues: [],
+      totals: {
+        expenses: 0,
+        received: 0,
+        dues: 0
+      }
+    };
+
+    // Function to update dashboard
+    const updateDashboard = () => {
+      const { expenses, received, dues } = savedData.totals;
+
+      // Update dashboard totals
+      document.getElementById("dashboard-total-expenses").textContent = expenses.toFixed(2);
+      document.getElementById("dashboard-total-received").textContent = received.toFixed(2);
+      document.getElementById("dashboard-total-due").textContent = dues.toFixed(2);
+
+      // Update chart data
+      if (!chart) {
+        chart = new Chart(document.getElementById("dashboard-chart"), {
+          type: "pie",
+          data: {
+            labels: ["Total Expenses", "Total Received", "Total Due"],
+            datasets: [{
+              label: "Amount Distribution",
+              data: [expenses, received, dues],
+              backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+              hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+            }]
+          }
+        });
+      } else {
+        chart.data.datasets[0].data = [expenses, received, dues];
+        chart.update();
+      }
+    };
+
+    // Add Expense
+    const addExpense = () => {
+      const name = document.getElementById("expense-name").value;
+      const amount = parseFloat(document.getElementById("expense-amount").value);
+      const category = document.getElementById("expense-category").value;
+      const date = document.getElementById("expense-date").value;
+
+      if (name && amount && !isNaN(amount)) {
+        savedData.expenses.push({ name, amount, category, date });
+        savedData.totals.expenses += amount;
+
+        // Save to localStorage and refresh UI
+        localStorage.setItem("monthlyData", JSON.stringify(savedData));
+        updateDashboard();
+        renderExpenseList();
+      }
+    };
+
+    // Add Received Amount
+    const addReceived = () => {
+      const from = document.getElementById("received-from").value;
+      const amount = parseFloat(document.getElementById("received-amount").value);
+      const date = document.getElementById("received-date").value;
+
+      if (from && amount && !isNaN(amount)) {
+        savedData.received.push({ from, amount, date });
+        savedData.totals.received += amount;
+
+        // Save to localStorage and refresh UI
+        localStorage.setItem("monthlyData", JSON.stringify(savedData));
+        updateDashboard();
+        renderReceivedList();
+      }
+    };
+
+    // Add Due Amount
+    const addDue = () => {
+      const person = document.getElementById("due-person").value;
+      const amount = parseFloat(document.getElementById("due-amount").value);
+      const date = document.getElementById("due-date").value;
+
+      if (person && amount && !isNaN(amount)) {
+        savedData.dues.push({ person, amount, date });
+        savedData.totals.dues += amount;
+
+        // Save to localStorage and refresh UI
+        localStorage.setItem("monthlyData", JSON.stringify(savedData));
+        updateDashboard();
+        renderDueList();
+      }
+    };
+
+    // Delete Item Functionality
+    const deleteItem = (type, index) => {
+      const dataList = savedData[type];
+      const item = dataList[index];
+
+      // Adjust totals
+      savedData.totals[type] -= item.amount;
+      dataList.splice(index, 1);
+
+      // Save to localStorage and refresh UI
+      localStorage.setItem("monthlyData", JSON.stringify(savedData));
+      updateDashboard();
+
+      if (type === "expenses") renderExpenseList();
+      if (type === "received") renderReceivedList();
+      if (type === "dues") renderDueList();
+    };
+
+    // Render Expense List
+    const renderExpenseList = () => {
+      const expenseList = document.getElementById("expense-list");
+      expenseList.innerHTML = "";
+
+      savedData.expenses.forEach((expense, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${expense.name} - ₹${expense.amount.toFixed(2)} (${expense.category}) on ${expense.date}`;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.style.marginLeft = "10px";
+        deleteButton.addEventListener("click", () => deleteItem("expenses", index));
+
+        li.appendChild(deleteButton);
+        expenseList.appendChild(li);
+      });
+    };
+
+    // Render Received List
+    const renderReceivedList = () => {
+      const receivedList = document.getElementById("received-list");
+      receivedList.innerHTML = "";
+
+      savedData.received.forEach((received, index) => {
+        const li = document.createElement("li");
+        li.textContent = `Received from ${received.from} - ₹${received.amount.toFixed(2)} on ${received.date}`;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.style.marginLeft = "10px";
+        deleteButton.addEventListener("click", () => deleteItem("received", index));
+
+        li.appendChild(deleteButton);
+        receivedList.appendChild(li);
+      });
+    };
+
+    // Render Due List
+    const renderDueList = () => {
+  const dueList = document.getElementById("due-list");
+  dueList.innerHTML = ""; // Clear existing list
+
+  savedData.dues.forEach((due, index) => {
+    // Create list item container
+    const li = document.createElement("li");
+    li.style.display = "flex";
+    li.style.alignItems = "center";
+    li.style.justifyContent = "space-between";
+    li.style.marginBottom = "12px";
+    li.style.padding = "12px";
+    li.style.borderRadius = "8px";
+    li.style.backgroundColor = "#fff";
+    li.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.1)";
+    li.style.fontSize = "16px";
+
+    // Checkbox for marking "paid"
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.style.marginRight = "12px";
+    checkbox.checked = due.paid;
+
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        due.paid = true;
+        savedData.totals.dues -= due.amount;
+      } else {
+        due.paid = false;
+        savedData.totals.dues += due.amount;
+      }
+      localStorage.setItem("monthlyData", JSON.stringify(savedData));
+      updateDashboard();
+      renderDueList();
+    });
+
+    // Due details
+    const dueDetails = document.createElement("div");
+    dueDetails.style.flexGrow = "1";
+    dueDetails.style.display = "flex";
+    dueDetails.style.flexDirection = "column";
+
+    const dueText = document.createElement("span");
+    dueText.textContent = `${due.person} owes ₹${due.amount.toFixed(2)}`;
+    dueText.style.fontWeight = "500";
+    if (due.paid) {
+      dueText.style.textDecoration = "line-through";
+      dueText.style.color = "gray";
+    }
+
+    const dueDate = document.createElement("small");
+    dueDate.textContent = `Due on: ${due.date}`;
+    dueDate.style.color = "#888";
+    dueDate.style.marginTop = "4px";
+
+    dueDetails.appendChild(dueText);
+    dueDetails.appendChild(dueDate);
+
+    // Stylish Delete Button
+    const deleteButton = document.createElement("button");
+    deleteButton.classList.add("delete-btn");
+    deleteButton.innerHTML = `<i class="fas fa-trash"></i>`;
+    deleteButton.style.backgroundColor = "transparent";
+    deleteButton.style.color = "#e63946";
+    deleteButton.style.border = "none";
+    deleteButton.style.cursor = "pointer";
+    deleteButton.style.width = "40px";
+    deleteButton.style.height = "40px";
+    deleteButton.style.borderRadius = "50%";
+    deleteButton.style.display = "flex";
+    deleteButton.style.alignItems = "center";
+    deleteButton.style.justifyContent = "center";
+    deleteButton.style.transition = "all 0.2s ease";
+    deleteButton.style.boxShadow = "0 3px 6px rgba(0, 0, 0, 0.1)";
+
+    deleteButton.addEventListener("mouseover", () => {
+      deleteButton.style.backgroundColor = "#e63946";
+      deleteButton.style.color = "#fff";
+      deleteButton.style.transform = "scale(1.1)";
+    });
+
+    deleteButton.addEventListener("mouseout", () => {
+      deleteButton.style.backgroundColor = "transparent";
+      deleteButton.style.color = "#e63946";
+      deleteButton.style.transform = "scale(1)";
+    });
+
+    deleteButton.addEventListener("click", () => {
+      savedData.dues.splice(index, 1);
+      savedData.totals.dues -= due.amount;
+      localStorage.setItem("monthlyData", JSON.stringify(savedData));
+      updateDashboard();
+      renderDueList();
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(dueDetails);
+    li.appendChild(deleteButton);
+    dueList.appendChild(li);
+  });
+};
+
+
+
+    // Event Listeners for Buttons
+    document.getElementById("add-expense-btn").addEventListener("click", addExpense);
+    document.getElementById("add-received-btn").addEventListener("click", addReceived);
+    document.getElementById("add-due-btn").addEventListener("click", addDue);
+
+    // Section Switching
+    menuButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        menuButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        sections.forEach((section) => section.classList.remove("active"));
+        document.getElementById(btn.getAttribute("data-section")).classList.add("active");
+      });
+    });
+
+    // Initial Render
+    updateDashboard();
+    renderExpenseList();
+    renderReceivedList();
+    renderDueList();
+  });
+</script>
