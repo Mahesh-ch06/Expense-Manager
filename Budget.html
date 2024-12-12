@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2, h3 {
+      color: #1a202c;
+    }
+
+    #budget-section, #chart-container {
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+      transition: transform 0.2s ease;
+    }
+
+    #budget-section:hover, #chart-container:hover {
+      transform: scale(1.02);
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+
+    button {
+    padding: 12px 20px;
+    border: 2px solid black;
+    background-color: black;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background-color: white;
+    color: black;
+    border-color: black;
+  }
+
+  .reset-btn {
+    background-color: red;
+    color: white;
+    border-color: red;
+  }
+
+  .reset-btn:hover {
+    background-color: white;
+    color: red;
+    border-color: red;
+  }
+
+
+    input, select {
+      padding: 10px;
+      margin-bottom: 15px;
+      width: 100%;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+
+    .reset-btn {
+      background-color: #e53e3e;
+      color: white;
+      border-color: #e53e3e;
+    }
+
+    .reset-btn:hover {
+      background-color: #c53030;
+    }
+
+    #budget-alert-container {
+      margin-top: 20px;
+    }
+
+    .brutalist-card {
+      width: 300px;
+      border: 3px solid #2d3748;
+      background-color: #f7fafc;
+      padding: 1.5rem;
+      box-shadow: 8px 8px 0 #2d3748;
+      font-family: "Arial", sans-serif;
+      margin: 0;
+      border-radius: 10px;
+      position: relative;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Add fade-in animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .brutalist-card__header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #2d3748;
+      padding-bottom: 0.5rem;
+    }
+
+    .brutalist-card__icon {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #2d3748;
+      padding: 0.7rem;
+      border-radius: 50%;
+    }
+
+    .brutalist-card__icon svg {
+      height: 1.5rem;
+      width: 1.5rem;
+      fill: #fff;
+    }
+
+    .brutalist-card__alert {
+      font-weight: 900;
+      color: #2d3748;
+      font-size: 1.3rem;
+      text-transform: uppercase;
+    }
+
+    .brutalist-card__message {
+      margin-top: 0.5rem;
+      color: #2d3748;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
+    .close-modal-btn {
+      background: none;
+      border: none;
+      color: #2d3748;
+      font-size: 1.5rem;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .close-modal-btn:hover {
+      color: #e53e3e;
+    }
+
+    /* Modal overlay styles */
+    #modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+      display: none; /* Hidden by default */
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="budget-section" class="section">
+    <h2>Budget Tracker</h2>
+
+    <!-- Budget Input -->
+    <div>
+      <label for="available-budget">Set Available Budget (₹):</label>
+      <input type="number" id="available-budget" placeholder="Enter budget" />
+      <button id="set-budget-btn">Set Budget</button>
+    </div>
+
+    <!-- Budget Display -->
+    <div>
+      <h3>Budget Summary</h3>
+      <p>Available Balance: ₹<span id="available-balance">0.00</span></p>
+      <p>Total Due: ₹<span id="total-due-display">0.00</span></p>
+      <p>Goal Limit: ₹<span id="goal-limit-display">0.00</span></p>
+      <p>Net Balance: ₹<span id="net-balance">0.00</span></p>
+    </div>
+
+    <!-- Alerts -->
+    <div id="budget-alert-container" class="card-container"></div>
+
+    <!-- Goal Setting -->
+    <div style="margin-top: 15px;">
+      <label for="goal-limit">Set Goal Limit (₹):</label>
+      <input type="number" id="goal-limit" placeholder="Enter goal limit" />
+      <button id="set-goal-btn">Set Goal</button>
+    </div>
+
+    <!-- Spending Section -->
+    <label for="spend-category" style="margin-top: 20px;">Select Category:</label>
+    <select id="spend-category">
+      <option value="Shopping">Shopping</option>
+      <option value="Food">Food</option>
+      <option value="Grocery">Grocery</option>
+      <option value="Traveling">Traveling</option>
+      <option value="Fees">Fees</option>
+      <option value="Paid to Someone">Paid to Someone</option>
+    </select>
+
+    <label for="spend-amount">Spend Amount (₹):</label>
+    <input type="number" id="spend-amount" placeholder="Enter amount to spend" />
+    <button id="spend-btn">Spend</button>
+    <button id="budget-reset-btn" class="reset-btn">Reset Budget</button>
+  </div>
+
+  <div id="chart-container">
+    <h2>Spending Analysis</h2>
+    <canvas id="spending-pie-chart" width="200" height="200"></canvas>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="modal-overlay"></div> 
+
+  <script>
+    // Data Initialization
+    const budgetData = {
+      available: 0,
+      goalLimit: 0,
+      categories: {
+        Shopping: 0,
+        Food: 0,
+        Grocery: 0,
+        Traveling: 0,
+        Fees: 0,
+        "Paid to Someone": 0,
+      },
+    };
+
+    let pieChart;
+
+    // Initialize Chart
+    const initializeChart = () => {
+      const ctx = document.getElementById("spending-pie-chart").getContext("2d");
+      pieChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: Object.keys(budgetData.categories),
+          datasets: [
+            {
+              data: Object.values(budgetData.categories),
+              backgroundColor: [
+                "#007bff",
+                "#28a745",
+                "#ffc107",
+                "#17a2b8",
+                "#fd7e14",
+                "#dc3545",
+              ],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+          },
+        },
+      });
+    };
+
+    // Update UI
+    const updateUI = () => {
+      const netBalance = budgetData.available;
+      document.getElementById("available-balance").textContent = budgetData.available.toFixed(2);
+      document.getElementById("goal-limit-display").textContent = budgetData.goalLimit.toFixed(2);
+      document.getElementById("net-balance").textContent = netBalance.toFixed(2);
+
+      // Update Chart Data
+      if (pieChart) {
+        pieChart.data.datasets[0].data = Object.values(budgetData.categories);
+        pieChart.update();
+      }
+
+      // Alerts
+      const alertContainer = document.getElementById("budget-alert-container");
+      alertContainer.innerHTML = "";
+      if (netBalance <= budgetData.goalLimit + 1000 && netBalance > budgetData.goalLimit) {
+        showAlert(
+          `Warning: You are ₹${(netBalance - budgetData.goalLimit).toFixed(2)} away from exceeding your goal limit.`,
+          "warning"
+        );
+      } else if (netBalance <= budgetData.goalLimit) {
+        showAlert(
+          `You have crossed your goal limit by ₹${(budgetData.goalLimit - netBalance).toFixed(2)}. Reduce spending!`,
+          "danger"
+        );
+      }
+    };
+
+    // Show Alert as Modal
+    const showAlert = (message, type) => {
+      const alertContainer = document.getElementById("modal-overlay");
+
+      // Create the alert card content
+      const alertCard = document.createElement("div");
+      alertCard.classList.add("brutalist-card");
+
+      const alertType = type === "warning" ? "Warning" : "Danger";
+      alertCard.innerHTML = `
+        <div class="brutalist-card__header">
+          <div class="brutalist-card__icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+              ></path>
+            </svg>
+          </div>
+          <div class="brutalist-card__alert">${alertType}</div>
+          <button class="close-modal-btn">&times;</button>
+        </div>
+        <div class="brutalist-card__message">${message}</div>
+      `;
+
+      // Append the alert card to the overlay
+      alertContainer.innerHTML = ""; // Clear previous alerts
+      alertContainer.appendChild(alertCard);
+
+      // Show the modal overlay
+      alertContainer.style.display = "flex";
+
+      // Close the modal when the close button is clicked
+      alertCard.querySelector(".close-modal-btn").addEventListener("click", () => {
+        alertContainer.style.display = "none";
+      });
+
+      // Close the modal when the overlay is clicked
+      alertContainer.addEventListener("click", (event) => {
+        if (event.target === alertContainer) {
+          alertContainer.style.display = "none";
+        }
+      });
+    };
+
+  // Event Listeners
+  document.getElementById("set-budget-btn").addEventListener("click", () => {
+    const budget = parseFloat(document.getElementById("available-budget").value);
+    if (isNaN(budget) || budget <= 0) return alert("Enter a valid budget.");
+    budgetData.available = budget;
+    updateUI();
+  });
+
+    document.getElementById("set-goal-btn").addEventListener("click", () => {
+    const goal = parseFloat(document.getElementById("goal-limit").value);
+    if (isNaN(goal) || goal <= 0) return alert("Enter a valid goal.");
+    budgetData.goalLimit = goal;
+    updateUI();
+  });
+
+    document.getElementById("spend-btn").addEventListener("click", () => {
+    const spend = parseFloat(document.getElementById("spend-amount").value);
+    const category = document.getElementById("spend-category").value;
+    if (isNaN(spend) || spend <= 0) return alert("Enter a valid spend amount.");
+    if (spend > budgetData.available) return alert("Not enough balance!");
+    budgetData.available -= spend;
+    budgetData.categories[category] += spend;
+    updateUI();
+  });
+
+// Show Confirmation Modal
+const showConfirmation = (message, onConfirm) => {
+  const modalOverlay = document.getElementById("modal-overlay");
+
+  // Create the brutalist-card content
+  const alertCard = document.createElement("div");
+  alertCard.classList.add("brutalist-card");
+
+  alertCard.innerHTML = `
+    <div class="brutalist-card__header">Warning</div>
+    <div class="brutalist-card__message">${message}</div>
+    <div class="brutalist-card__actions">
+      <button id="confirm-reset-btn">Confirm</button>
+      <button id="cancel-reset-btn">Cancel</button>
+    </div>
+  `;
+
+  // Clear previous content and append the alert card
+  modalOverlay.innerHTML = "";
+  modalOverlay.appendChild(alertCard);
+
+  // Show the modal
+  modalOverlay.style.display = "flex";
+
+  // Handle Confirm action
+  document.getElementById("confirm-reset-btn").addEventListener("click", () => {
+    onConfirm(); // Execute the reset logic
+    modalOverlay.style.display = "none"; // Close the modal
+  });
+
+  // Handle Cancel action
+  document.getElementById("cancel-reset-btn").addEventListener("click", () => {
+    modalOverlay.style.display = "none"; // Close the modal
+  });
+
+  // Close the modal if clicking outside the alert card
+  modalOverlay.addEventListener("click", (event) => {
+    if (event.target === modalOverlay) {
+      modalOverlay.style.display = "none";
+    }
+  });
+};
+
+// Reset Functionality
+document.getElementById("budget-reset-btn").addEventListener("click", () => {
+  showConfirmation(
+    "Are you sure you want to reset all data?",
+    () => {
+      // Reset data logic
+      budgetData.available = 0;
+      budgetData.goalLimit = 0;
+      budgetData.categories = {
+        Shopping: 0,
+        Food: 0,
+        Grocery: 0,
+        Traveling: 0,
+        Fees: 0,
+        "Paid to Someone": 0,
+      };
+      updateUI(); // Call your function to update the UI after reset
+    }
+  );
+});
+
+
+    // Initialize everything
+    initializeChart();
+    updateUI();
+  </script>
+</body>
+</html>
