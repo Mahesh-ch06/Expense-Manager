@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expense Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Roboto', sans-serif; /* Updated font */
       background-color: #f9f9f9;
       margin: 0;
       padding: 0;
@@ -170,84 +171,6 @@
     input, select, button {
       outline: none;
     }
-
-
-    /* Container for alert cards */
-  #alert-card-container {
-    margin-top: 20px;
-  }
-
-  .alert-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-
-  .alert-warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-left: 5px solid #ffc107;
-  }
-
-  .alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-left: 5px solid #dc3545;
-  }
-
-  .alert-card button {
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    color: inherit;
-  }
-
-  .alert-card button:hover {
-    text-decoration: underline;
-  }
-
-
-    /* Budget Section Styling */
-#budget-section {
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Inputs and Buttons */
-#budget-section input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-#budget-section button {
-  width: 100%;
-  padding: 10px;
-  background-color: #36a2eb;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: 0.3s ease;
-}
-
-#budget-section button:hover {
-  background-color: #007bff;
-}
-
 /* Tips Section */
 #tips-list {
   list-style: square;
@@ -424,61 +347,7 @@
           </div>
         </div>
       </section>
-    </main>
-
-    <div id="budget-section" class="section">
-        <h2>Budget Tracker</h2>
-      
-        <!-- Budget Input -->
-        <div>
-          <label for="available-budget">Set Available Budget (₹):</label>
-          <input type="number" id="available-budget" placeholder="Enter budget" />
-          <button id="set-budget-btn">Set Budget</button>
-        </div>
-      
-        <!-- Budget Display -->
-<!-- Budget Display -->
-<div>
-    <h3>Budget Summary</h3>
-    <p>Available Balance: ₹<span id="available-balance">0.00</span></p>
-    <p>Total Due: ₹<span id="total-due-display">0.00</span></p>
-    <p>Goal Limit: ₹<span id="goal-limit-display">0.00</span></p>
-    <p>Net Balance (Available - Total Due): ₹<span id="net-balance">0.00</span></p>
-
-    <!-- Alert Notifications -->
-  <div id="budget-alert-container" style="margin-top: 20px;"></div>
-
-    <!-- Reset Button -->
-  <button id="budget-reset-btn" style="margin-top: 10px; background-color: #e63946; color: white; padding: 8px 12px; border: none; cursor: pointer; border-radius: 4px;">
-    Reset Budget
-  </button>
-  </div>
-  
-      
-        <!-- Goal Setting -->
-        <div>
-          <label for="goal-limit">Set Goal Limit (₹):</label>
-          <input type="number" id="goal-limit" placeholder="Enter goal limit" />
-          <button id="set-goal-btn">Set Goal</button>
-        </div>
-      
-        <!-- Spending Section -->
-        <div>
-          <label for="spend-amount">Spend Amount (₹):</label>
-          <input type="number" id="spend-amount" placeholder="Enter amount to spend" />
-          <button id="spend-btn">Spend</button>
-        </div>
-      
-        <!-- Tips Section -->
-        <div>
-          <h3>Budgeting Tips</h3>
-          <ul id="tips-list">
-            <li>Track small expenses—they add up fast!</li>
-            <li>Prioritize paying off dues before discretionary spending.</li>
-            <li>Set realistic saving goals to build a buffer.</li>
-            <li>Regularly review your budget and adjust as needed.</li>
-          </ul>
-        </div>
+    </main>        
       </div>
   </div>
   <script>
@@ -742,209 +611,6 @@
   });
 };
 
-
-
-let budgetData = JSON.parse(localStorage.getItem("budgetData")) || {
-  available: 0,
-  goalLimit: 0,
-  totalDue: 0, // Initialize totalDue to 0 if not present
-};
-
-// Update the UI
-const updateBudgetUI = () => {
-  const netBalance = budgetData.available - budgetData.totalDue;
-
-  // Update the UI elements
-  document.getElementById("available-balance").textContent = budgetData.available.toFixed(2);
-  document.getElementById("total-due-display").textContent = budgetData.totalDue.toFixed(2);
-  document.getElementById("goal-limit-display").textContent = budgetData.goalLimit.toFixed(2);
-  document.getElementById("net-balance").textContent = netBalance.toFixed(2);
-
-  // Warnings for budget conditions
-  const showAlert = (message, type) => {
-    const alertContainer = document.getElementById("budget-alert-container");
-    
-    // Preventing multiple alerts if the same condition happens again
-    const existingAlerts = alertContainer.querySelectorAll(".alert-card");
-    if (existingAlerts.length > 0) {
-      return; // Don't add new alert if there are already alerts showing
-    }
-    
-    // Create an alert card
-    const alertCard = document.createElement("div");
-    alertCard.classList.add("alert-card");
-
-    // Set class based on alert type
-    if (type === "warning") {
-      alertCard.classList.add("alert-warning");
-    } else if (type === "danger") {
-      alertCard.classList.add("alert-danger");
-    }
-
-    // Add alert message and close button
-    alertCard.innerHTML = `
-      <span>${message}</span>
-      <button onclick="closeAlert(this)">Dismiss</button>
-    `;
-
-    // Append the alert to the container
-    alertContainer.appendChild(alertCard);
-  };
-
-  // Function to close the alert
-  const closeAlert = (button) => {
-    button.parentElement.remove();
-  };
-
-  // Add event listener to "Set Goal" button
-  document.getElementById("set-goal-btn").addEventListener("click", () => {
-    const goalLimit = parseFloat(document.getElementById("goal-limit").value);
-    const availableBalance = parseFloat(document.getElementById("available-balance").textContent);
-
-    // Check if the available balance exceeds the goal limit
-  });
-
-  // Add event listener to "Spend" button
-  document.getElementById("spend-btn").addEventListener("click", () => {
-    const spendAmount = parseFloat(document.getElementById("spend-amount").value);
-    const availableBalance = parseFloat(document.getElementById("available-balance").textContent);
-
-    // Check if the spend amount exceeds available balance
-  });
-
-// Add event listener to "Spend" button
-document.getElementById("spend-btn").addEventListener("click", () => {
-  // Get the spend amount from the input field
-  const spendAmount = parseFloat(document.getElementById("spend-amount").value);
-  
-  // Get the available balance from the UI
-  const availableBalance = parseFloat(document.getElementById("available-balance").textContent);
-  
-  // Calculate the net balance (Available - Total Due)
-  const netBalance = availableBalance - budgetData.totalDue;
-
-  // Check if the net balance is below the goal limit
-  if (netBalance < budgetData.goalLimit) {
-    showAlert(`Warning: Net balance is below the goal limit! <br>
-      Available Balance: ₹${availableBalance.toFixed(2)} <br>
-      Total Due: ₹${budgetData.totalDue.toFixed(2)} <br>
-      Goal Limit: ₹${budgetData.goalLimit.toFixed(2)} <br>
-      Net Balance (Available - Total Due): ₹${netBalance.toFixed(2)} `, "warning");
-  }
-  // Check if available balance exceeds goal limit
-  else if (availableBalance < budgetData.goalLimit) {
-    showAlert("Warning: Available balance exceeds the goal limit!", "warning");
-  }
-  // Check if the spend amount exceeds available balance
-  else if (spendAmount > availableBalance) {
-    showAlert("You don't have enough available balance to spend this amount.", "danger");
-  } else {
-    // Optionally, you can also proceed with the spending action here
-    console.log("Spending action is valid.");
-  }
-});
-
-};
-
-// Reset Budget Functionality
-const resetBudgetData = () => {
-    const confirmReset = confirm("Are you sure you want to reset the budget? This action will clear all budget-related data.");
-    if (!confirmReset) return;
-
-    budgetData = {
-      available: 0,
-      goalLimit: 0,
-      totalDue: 0
-    };
-
-    localStorage.setItem("budgetData", JSON.stringify(budgetData));
-    updateBudgetUI();
-
-    alert("Budget data has been reset successfully.");
-  };
-
-  document.getElementById("budget-reset-btn").addEventListener("click", resetBudgetData);
-
-
-const updateTotalDuesFromRender = () => {
-  const unpaidDues = savedData.dues.filter((due) => !due.paid).reduce((sum, due) => sum + due.amount, 0);
-  budgetData.totalDue = unpaidDues; // Update totalDue in budgetData
-  localStorage.setItem("budgetData", JSON.stringify(budgetData)); // Save updated data
-  updateBudgetUI(); // Refresh the budget UI
-};
-
-
-// Update Total Dues
-const updateTotalDues = () => {
-  const unpaidDues = savedData.dues.filter((due) => !due.paid).reduce((sum, due) => sum + due.amount, 0);
-  budgetData.totalDue = unpaidDues;
-  localStorage.setItem("budgetData", JSON.stringify(budgetData));
-  updateBudgetUI();
-};
-
-// Event Listeners for Budget Management
-document.getElementById("set-budget-btn").addEventListener("click", () => {
-  const available = parseFloat(document.getElementById("available-budget").value);
-  if (!isNaN(available) && available > 0) {
-    budgetData.available = available;
-    localStorage.setItem("budgetData", JSON.stringify(budgetData));
-    updateBudgetUI();
-  } else {
-    alert("Please enter a valid budget.");
-  }
-});
-
-document.getElementById("set-goal-btn").addEventListener("click", () => {
-  const goalLimit = parseFloat(document.getElementById("goal-limit").value);
-  if (!isNaN(goalLimit) && goalLimit > 0) {
-    budgetData.goalLimit = goalLimit;
-    localStorage.setItem("budgetData", JSON.stringify(budgetData));
-    updateBudgetUI();
-  } else {
-    alert("Please enter a valid goal limit.");
-  }
-});
-
-document.getElementById("spend-btn").addEventListener("click", () => {
-  const spendAmount = parseFloat(document.getElementById("spend-amount").value);
-  if (!isNaN(spendAmount) && spendAmount > 0) {
-    if (spendAmount > budgetData.available) {
-      alert("Insufficient budget to complete this transaction.");
-    } else {
-      budgetData.available -= spendAmount;
-      localStorage.setItem("budgetData", JSON.stringify(budgetData));
-      updateBudgetUI();
-    }
-  } else {
-    alert("Please enter a valid spending amount.");
-  }
-});
-
-// Adjust Budget When a Due is Paid
-const markDueAsPaid = (index) => {
-  const due = savedData.dues[index];
-  if (!due.paid) {
-    due.paid = true;
-    budgetData.available -= due.amount;
-    savedData.totals.dues -= due.amount;
-  } else {
-    due.paid = false;
-    budgetData.available += due.amount;
-    savedData.totals.dues += due.amount;
-  }
-  localStorage.setItem("budgetData", JSON.stringify(budgetData));
-  localStorage.setItem("monthlyData", JSON.stringify(savedData));
-  updateDashboard();
-  updateBudgetUI();
-  renderDueList();
-};
-
-// Initial Load
-updateBudgetUI();
-
-
-
-
     // Event Listeners for Buttons
     document.getElementById("add-expense-btn").addEventListener("click", addExpense);
     document.getElementById("add-received-btn").addEventListener("click", addReceived);
@@ -960,6 +626,16 @@ updateBudgetUI();
         document.getElementById(btn.getAttribute("data-section")).classList.add("active");
       });
     });
+
+    // Select the button with data-section="budget-section"
+const budgetButton = document.querySelector('.menu-btn[data-section="budget-section"]');
+
+// Add a click event listener
+budgetButton.addEventListener('click', () => {
+  // Navigate to another link or page
+  window.location.href = 'loading.html'; // Replace with your desired URL
+});
+
 
     // Initial Render
     updateDashboard();
